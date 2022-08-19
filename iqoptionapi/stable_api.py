@@ -793,6 +793,34 @@ class IQ_Option:
                 break
             time.sleep(1)
 
+    def check_win_by_market(self, buy_order_id, market):
+        if market == 'digital':
+            return self.check_win_digital_v2(buy_order_id)
+        elif market == 'binary':
+            return self.check_win_binary(buy_order_id)
+        else:
+            return False, None
+
+        
+    # ADD check win binary
+    def check_win_binary(self, buy_order_id):
+
+        while self.get_async_order(buy_order_id)["position-changed"] == {}:
+            pass
+        order_data = self.get_async_order(
+            buy_order_id)["position-changed"]["msg"]
+        if order_data != None:
+            if order_data["status"] == "closed" and order_data["source"] == "binary-options":
+                if order_data["close_reason"] == "win":
+                    return True, order_data["close_profit"] - order_data["invest"]
+                elif order_data["close_reason"] == "loose":
+                    return True, 0
+                elif order_data["close_reason"] == "default":
+                    return True, order_data["pnl_realized"]
+            else:
+                return False, None
+        else:
+            return False, None
     # -------------------get infomation only for binary option------------------------
 
     def get_betinfo(self, id_number):
